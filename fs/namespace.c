@@ -318,8 +318,6 @@ static struct mount *susfs_alloc_unshare_ksu_vfsmnt(const char *name, int old_mn
 out_free_devname:
 	kfree_const(mnt->mnt_devname);
 #endif
-out_free_id:
-	mnt_free_id(mnt);
 out_free_cache:
 	kmem_cache_free(mnt_cache, mnt);
 	return NULL;
