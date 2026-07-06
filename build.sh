@@ -47,23 +47,45 @@ pushd $(dirname "$0") > /dev/null
 CORES=`cat /proc/cpuinfo | grep -c processor`
 
 # Define toolchain variables
-CLANG_DIR=$PWD/toolchain/clang-r547379
+CLANG_VERSION="clang-r547379"
+CLANG_DIR=$PWD/toolchain/$CLANG_VERSION
 PATH=$CLANG_DIR/bin:$PATH
 
 # Check if toolchain exists
 if [ ! -f "$CLANG_DIR/bin/clang-20" ]; then
     echo "-----------------------------------------------"
-    echo "Toolchain not found! Downloading..."
+    echo "Toolchain not found! Downloading $CLANG_VERSION from GitHub Releases..."
     echo "-----------------------------------------------"
     rm -rf $CLANG_DIR
     mkdir -p $CLANG_DIR
     pushd $CLANG_DIR > /dev/null
-    curl -LJOk https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r547379.tar.gz
-    tar xf main-clang-r547379.tar.gz
-    rm main-clang-r547379.tar.gz
-    echo "Cleaning up..."
+    
+    # Download from GitHub Releases
+    DOWNLOAD_URL="https://github.com/JeyKul/clang-r547379/releases/download/clang/linux-x86-refs_heads_main-clang-r547379.tar.gz"
+    
+    if ! curl -L -f --connect-timeout 30 "$DOWNLOAD_URL" -o "${CLANG_VERSION}.tar.gz"; then
+        echo "Error: Download failed!"
+        popd > /dev/null
+        exit 1
+    fi
+    
+    echo "Download successful, extracting..."
+    tar xf "${CLANG_VERSION}.tar.gz"
+    rm "${CLANG_VERSION}.tar.gz"
+    echo "Extraction complete."
     popd > /dev/null
 fi
+
+# Verify toolchain installation
+if [ ! -f "$CLANG_DIR/bin/clang-20" ]; then
+    echo "-----------------------------------------------"
+    echo "Error: Toolchain installation failed!"
+    echo "clang-20 not found in $CLANG_DIR/bin/"
+    echo "-----------------------------------------------"
+    exit 1
+fi
+
+echo "Toolchain ready: $($CLANG_DIR/bin/clang-20 --version | head -n 1)"
 
 MAKE_ARGS="
 LLVM=1 \
